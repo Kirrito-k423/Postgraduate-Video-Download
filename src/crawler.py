@@ -4,6 +4,12 @@ import re
 import global_variable as glv
 from tsjPython import *
 from urllib import request
+import urllib.request
+#导入 bs4 库
+import bs4
+from bs4 import BeautifulSoup
+from multiBar import barString
+from requests import Session
 
 def crawlerDownload():
     filepaths = os.getcwd() + glv._get("taskfilePath")
@@ -53,6 +59,48 @@ def downloadUrlList(filepaths,html_file,regexString,taskType):
             urlNameList[filename]=url
         return urlNameList
 
+
+
+def downloadFromUrl(taskFileName, taskUrl,taskType):
+    ic(taskUrl)
+    # regexString=glv._get(taskType)["baseUrl"]+glv._get(taskType)["regexMp4"]
+
+    # 先通过学校验证再下载网页，
+    # https://stackoverflow.com/questions/1825438/download-html-page-and-its-contents
+    opener = urllib.request.FancyURLopener({})
+    f = opener.open(taskUrl)
+    content = f.read()
+
+    #1.得到beautifulsoup对象
+    soup = BeautifulSoup(content,'html.parser')
+
+    #通过指定的 属性获取对象
+    ic(soup.find(id=glv._get(taskType)["data1id"]).attrs['value'])#单个对象
+    ic(soup.find(id=glv._get(taskType)["data2id"]).attrs['value'])#单个对象
+
+    data1Value=soup.find(id=glv._get(taskType)["data1id"]).attrs['value']
+    data2Value=soup.find(id=glv._get(taskType)["data2id"]).attrs['value']
+
+    videoUrl = getVideoUrl(data1Value, data2Value,taskType)
+    videoDownload(videoUrl,taskFileName,taskType)
+
+def getVideoUrl(data1Value, data2Value,taskType):
+    session = Session()
+    lesson_info_url = glv._get(taskType)["phpApi"]
+
+    headers = glv._get(taskType)["headers"]
+
+
+    data = {
+            glv._get(taskType)["data1name"]: data1Value,
+            glv._get(taskType)["data2name"]: data2Value
+        }
+
+    resp = session.post(url=lesson_info_url, headers=headers, data=data)
+    # get php
+    ic(resp.text)
+    return resp.text
+
 #下载进度函数
 def report(a,b,c):
     '''
@@ -60,19 +108,20 @@ def report(a,b,c):
     b:数据块的大小
     c:远程文件的大小
     '''
-    per = 100.0 * a * b / c
+    step=1
+    per = int(100 * a * b / c)
     if per > 100:
         per = 100
-    if per % 1 == 1:
-        print ('%.2f%%' % per)
+    if per % step == 0:
+        printString=barString("downloading",per,100)
+        print(printString, end = "\r")
 
-def downloadFromUrl(taskFileName, taskUrl,taskType):
-    ic(taskUrl)
-    regexString=glv._get(taskType)["baseUrl"]+glv._get(taskType)["regexMp4"]
-
-    # 先通过学校验证再下载网页，然后再找到php直连
-    # 或者直接分析出
-
-
-    #使用下载函数下载视频并调用进度函数输出下载进度
-    request.urlretrieve(url=taskUrl,filename=glv._get("downloadPath")+taskFileName,reporthook=report,data=None)
+def videoDownload(videoUrl,taskFileName,taskType):
+    base_url=glv._get(taskType)["baseUrl"]+videoUrl
+    try:
+        request.urlretrieve(url=base_url,filename=glv._get("downloadPath")+taskFileName,reporthook=report,data=None)
+    except error.HTTPError as e:
+        print(e)
+        print('\r\n' + base_url + ' download failed!' + '\r\n')
+    else:
+        print('\r\n' + base_url + ' download successfully!')
