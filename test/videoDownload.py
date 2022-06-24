@@ -68,7 +68,7 @@ def barString(name,current=0,total=-1):
         retSting+="| {} [{}<{}, {} s/it]".format(str(current)+"/"+str(total),time2String(pastTime),time2String(restTime),time2String(lastTime))
     return retSting 
 
-def report(a,b,c):
+def report(a,b,c,name):
     '''
     a:已经下载的数据块
     b:数据块的大小

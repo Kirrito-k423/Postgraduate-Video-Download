@@ -8,7 +8,7 @@ import urllib.request
 #导入 bs4 库
 import bs4
 from bs4 import BeautifulSoup
-from multiBar import barString
+from multiBar import barString,clearBarInfo
 from requests import Session
 
 def crawlerDownload():
@@ -120,6 +120,7 @@ def videoDownload(videoUrl,taskFileName,taskType):
     base_url=glv._get(taskType)["baseUrl"]+videoUrl
     try:
         request.urlretrieve(url=base_url,filename=glv._get("downloadPath")+taskFileName,reporthook=report,data=None)
+        clearBarInfo()
     except error.HTTPError as e:
         print(e)
         print('\r\n' + base_url + ' download failed!' + '\r\n')
