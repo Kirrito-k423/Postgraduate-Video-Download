@@ -6,3 +6,8 @@
 
 右键保存HTML文件至`todo/`目录
 ![1655971438110](image/README/1655971438110.png)
+
+```
+pip install -r requirements.txt
+python ./src/main.py
+```
